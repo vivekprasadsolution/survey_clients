@@ -27,7 +27,8 @@
             //alert(form + ' form submitted'); 
             var x = $('#'+form).serialize(); 
            // alert(x);
-            
+           // var params = $('checkbox').attr("data-params");
+            //alert(params);
             
                      $.ajax({
                         url:base_url+"index.php/question_start_ci/next_question",
@@ -178,7 +179,9 @@
                             <?php print getfields_type($question[0]->question_id_fk); ?>
                         </select>
                             <?php elseif($question[0]->question_type_name ==='Check Box Type')  :?>
+                        <option id="option1">
                             <?php print getcheckbox_type($question[0]->question_id_fk); ?>
+                        </option>    
                             <?php endif; ?>
                             
 

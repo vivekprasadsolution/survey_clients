@@ -18,7 +18,8 @@ class Question_start_ci extends CI_Controller{
     public function index(){ 
         $this->session->unset_userdata("countarray");
         $this->session->unset_userdata("fields_questions");
-        $this->survey_model->delete_items();    
+        $this->survey_model->delete_items();  
+        $this->cap_model->delete_items();
         $this->survey_questions_probing();
     }
     
@@ -104,7 +105,7 @@ class Question_start_ci extends CI_Controller{
         
          $cappset_values = '';
          $old_question_id = array();
-         echo $question_id = $this->input->post('question_id');
+         $question_id = $this->input->post('question_id');
          $indexed_id = $this->input->post('next_id');
          $linked_id = $this->input->post('linked_id'); 
          $checked_answere = $this->input->post('seleted_checkbox');
@@ -122,20 +123,47 @@ class Question_start_ci extends CI_Controller{
                 // checking suppression if ys results as true
                 if($result===TRUE){
                      echo "SUPPRESSED QUESTIONS";
-                     $_row = $this->session->countarray;
+                    // $_row = $this->session->countarray;
                      $data['question'] =  $this->survey_model->get_question_next($question_id);
-                     $this->session->unset_userdata("first_start");
+                    // $this->session->unset_userdata("first_start");
                 }else{  
                           echo "NEXT QUESTIONS";
                           $data['question'] =  $this->survey_model->get_question_next($question_id);
                           
                      }
                     
-               
-                
                /////echo  $_SESSION['fields_questions'][$_row];
                                 
-                // INSERT CAPPSET TEMP DATA TO TEMP CAPPSTE TABLE 
+       // INSERT CAPPSET TEMP DATA TO TEMP CAPPSTE TABLE 
+       //CHECK IS THIS QUESTION ID IS A CAPP SET IT IT IS CAPPSET THEN INSERT INTO TEMP CAPSET TABLE
+                     
+                        $is_cappset_fields = $this->cap_model->check_cap($question_id);  
+                        
+                        echo "<pre>";
+                        
+                        if($is_cappset_fields !== FALSE){
+                            $cappset_id  = $is_cappset_fields[0]->cappset_id;
+                            
+                             for($i=0;$i<count($checked_answere);$i++){
+                         
+                                $inserting_tempcappset = array(
+                                                                "cappset_id" => $cappset_id,
+                                                                "question_id"=> $question_id,
+                                                                "answer_id"  => $checked_answere[$i]
+                                                            );
+
+                                $this->cap_model->insert_temp($inserting_tempcappset);
+
+                            }
+                            
+                            
+                        }else{
+                            
+                        }
+                        
+                        
+                       
+                     
                 
                
                 
@@ -341,22 +369,67 @@ class Question_start_ci extends CI_Controller{
     
     
     
-    public function check_cappset(){
+     public function check_cappset(){
+        $search_stack =array();
+        $values       =array();
+        $get_cap_id  = $this->cap_model->capp();
+        echo "<pre>";
+        //print_r($get_cap_id);
         
-        
-        $get_cap_id  = $this->cap_model->count_cappset();
-        
-        print_r($get_cap_id);
-        
-        foreach($get_cap_id as $val){
-            $this->cap_model->get_cappset($val->id);
+        for($i=0;$i<count($get_cap_id);$i++){ 
+            
+            $test  = $this->cap_model->get_cappset($get_cap_id[$i]->id);
+            //print_r($test);
+            
+            $values=array();
+            $answers_temp=array();
+            
+            foreach ($test as  $key => $val){
+                 $values[]     = $val->question_id;
+                 $answers_temp[] = $val->questions_answers_id;
+            }
+           
+            $answers_id  = implode(",", $answers_temp);
+            $question_id = implode(",", $values);
+            
+            echo 'ID-: '.$val->id.'- '.$question_id .'</br>';
+            
+                // update check every thing here
+                $is_success = $this->cap_model->get_temp_answer($val->id,$question_id,$answers_id);
+                
+                if ($is_success !== FALSE){
+                    
+                    if(count($test) === count($is_success)){
+                        
+                        echo "First check the record count is really the added capset question  check by using count capset with that id";
+                        echo "if success then count the last cappset record and substract - 1 from that";
+                        echo $val->id;
+                        
+                        $fields_capp = $this->cap_model->select_capp_usingid($val->id);
+                        
+                        
+                        $lead = $fields_capp[0]->lead_count - 1;
+                        echo $lead;
+                        
+                        $data=array("lead_count"=>$lead);
+                        
+                        $this->cap_model->update_cappcount($val->id,$data);
+                        
+                        
+                    } else {
+                        echo "FAILED";
+                    }
+                    
+                   
+                    
+                    
+                    
+                    
+                    
+                }else{
+                    echo "Null";
+                }
         }
-        
-       
-        
-        
-        
-        
         
     }
     

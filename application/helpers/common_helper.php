@@ -71,7 +71,7 @@ if(!function_exists('getcheckbox_type')){
        
         foreach ($xx->result() as $row) {
 
-            $html .= '<input type="checkbox"  name="seleted_checkbox[]" value="'.$row->answer.'" form-control>  '.$row->answer.'<br>';
+            $html .= '<input type="checkbox"  name="seleted_checkbox[]" value="'.$row->id.'"  data-params="'.$row->id.'"  form-control>  '.$row->answer.'<br>';
                         
             
         }

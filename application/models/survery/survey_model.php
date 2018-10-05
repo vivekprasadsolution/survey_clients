@@ -81,7 +81,7 @@ class survey_model extends CI_Model{
     //                    INNER JOIN question_type as QT on QT.id = Q.question_type_id
     ///               WHERE campaign_fk=1 AND flow_ranking > $question_index HAVING Q.status=1 $merged_queries  ORDER BY SF.survey_flow_id  LIMIT 1";
           
-    echo   $SQLtxt = "SELECT *
+       $SQLtxt = "SELECT *
                    FROM survey_question_flow as SF inner join questions as Q on Q.id= SF.question_id_fk 
                     INNER JOIN question_type as QT on QT.id = Q.question_type_id
                    WHERE campaign_fk=1 AND SF.question_id_fk=$question_index  HAVING Q.status=1 $merged_queries  ORDER BY SF.survey_flow_id  LIMIT 1";
