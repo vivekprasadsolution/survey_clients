@@ -75,12 +75,7 @@ class survey_model extends CI_Model{
     
     
     public function get_question_next($question_index='',$merged_queries=''){
-      
-    //     $SQLtxt = "SELECT *
-    //               FROM survey_question_flow as SF inner join questions as Q on Q.id= SF.question_id_fk 
-    //                    INNER JOIN question_type as QT on QT.id = Q.question_type_id
-    ///               WHERE campaign_fk=1 AND flow_ranking > $question_index HAVING Q.status=1 $merged_queries  ORDER BY SF.survey_flow_id  LIMIT 1";
-          
+ 
        $SQLtxt = "SELECT *
                    FROM survey_question_flow as SF inner join questions as Q on Q.id= SF.question_id_fk 
                     INNER JOIN question_type as QT on QT.id = Q.question_type_id
@@ -93,8 +88,8 @@ class survey_model extends CI_Model{
         
     }
     
-    public function check_items($question_id,$indexed_id='',$extra_queries){
-      $SQLtxt="SELECT text FROM `survey_link_answers` WHERE question_id =$question_id   $extra_queries  LIMIT 1";
+    public function check_items($question_id,$extra_queries){
+    echo   $SQLtxt="SELECT text FROM `survey_link_answers` WHERE question_id =$question_id   $extra_queries  LIMIT 1";
         
             $fields= $this->db->query($SQLtxt);
             if($fields->num_rows() > 0) return TRUE;
@@ -104,18 +99,17 @@ class survey_model extends CI_Model{
     
 
     
-    public function linked_question($search_questionid,$index_id=''){
-         $SQLtxt ="SELECT *
-            FROM survey_question_flow WHERE question_id_fk=$search_questionid  AND is_linked=1";
+    public function linked_question($search_questionid){
+         $SQLtxt ="SELECT * FROM question_linked WHERE question_linked=$search_questionid";
         
         $fields= $this->db->query($SQLtxt);
-            if($fields->num_rows() > 0) return TRUE;
+            if($fields->num_rows() > 0) return $fields->result();
         else return FALSE;
     }
      
     
     public function fields_answers_from_temp($next_question){
-        $SQLtxt = "SELECT * FROM temp_table WHERE linked_id=$next_question";
+        $SQLtxt = "SELECT * FROM temp_table WHERE question_id=$next_question";
         
         $fields= $this->db->query($SQLtxt);
             if($fields->num_rows() > 0) return $fields->result();
@@ -123,7 +117,9 @@ class survey_model extends CI_Model{
     }
     
 
-    
+    //****************************************************************************************************
+    // FETCH SUPPRESSION QUESTION DETAILS 
+    //****************************************************************************************************
     
     public function fetch_suppression_details($question_ids){
         $SQLtxt = "SELECT * FROM  question_suppression INNER JOIN  suppression ON 
@@ -138,6 +134,10 @@ class survey_model extends CI_Model{
         
     }
     
+    //****************************************************************************************************
+    // FETCH SUPPRESSION QUESTION DETAILS 
+    //****************************************************************************************************
+     
     
     public function find_suppression($sup_id,$supp_values=''){
             $SQLtxt = "SELECT * FROM suppression_values WHERE suppression_id=$sup_id and value= $supp_values";
@@ -169,6 +169,9 @@ class survey_model extends CI_Model{
         $this->db->query($SQLtxt);
         
     }
+    
+
+    
     
     
 }

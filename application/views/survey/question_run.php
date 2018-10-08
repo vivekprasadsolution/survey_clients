@@ -8,7 +8,19 @@
     
 </style>    
 
-
+<script>
+        function endsurvey() {
+            
+            let cnf = confirm("Are you sure want to end the Survey?");
+           
+            if (cnf == true) {
+                sessionStorage.clear();
+                location.href = "http://172.23.7.94/survey_clients/index.php/Question_start_ci/terminate";       
+            }else{
+                  
+            }
+        }
+</script>
 
 <script>
     
@@ -170,7 +182,7 @@
                     
                     <input type="text" name="question_id" value="<?php echo $question[0]->question_id_fk; ?>">
                     <input type="text" name="next_id" value="<?php echo $question[0]->flow_ranking; ?>">
-                    <input type="text" name="linked_id" value="<?php echo $question[0]->linked_question_id; ?>">
+                    <input type="text" name="linked_id" value="<?php //echo $question[0]->question_primary; ?>">
                    
                     <div id="linkedid-<?php echo $question[0]->survey_flow_id; ?>" class=" form-group ">
                         <h4><?php echo $question[0]->flow_ranking; ?>.<?php echo $question[0]->question_text;?> <span class="fa  fa-check-circle saved"></span></h4>
@@ -215,7 +227,7 @@
     <div class="box-body pull-right" style=" padding-top: 40px">
         <div class="row">
             <div class="col-md-12 ">
-                <button id="button_end" class="form-control btn-danger" > End survey </button> 
+                <a href="javascript:void(0)" onclick="endsurvey();"  id="button_end" class="form-control btn-danger">End Survey</a>
             </div>
         </div>
     </div>

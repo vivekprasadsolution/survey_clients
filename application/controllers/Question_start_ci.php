@@ -67,7 +67,7 @@ class Question_start_ci extends CI_Controller{
         //**************************************************************************************** 
          
         $result = $this->check_suppression($_SESSION['fields_questions'][0]);   
-        
+            
         if($result===TRUE){
              $_row = $this->session->countarray + 1;
              $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row],$extra_query);
@@ -105,7 +105,7 @@ class Question_start_ci extends CI_Controller{
         
          $cappset_values = '';
          $old_question_id = array();
-         $question_id = $this->input->post('question_id');
+         $question_id_server = $this->input->post('question_id');
          $indexed_id = $this->input->post('next_id');
          $linked_id = $this->input->post('linked_id'); 
          $checked_answere = $this->input->post('seleted_checkbox');
@@ -117,53 +117,89 @@ class Question_start_ci extends CI_Controller{
                 
                if($this->session->records > $this->session->countarray){
                    
-                echo  $_row  =  $this->session->countarray;  
+                 $_row = $this->session->countarray;   
+                 
+                //echo $question_id_server;
+                 
+                $data['is_linked'] = $this->survey_model->linked_question($question_id_server);
                 
+                print_r($data['is_linked']);
+                
+                
+                if($data['is_linked'] !==FALSE){
+                    $question_id = $data['is_linked'][0]->question_linked;
+                } else {
+                    $question_id = $question_id_server;
+                }
+                 
+                 
                 $result = $this->check_suppression($question_id);   
+                
+                 
+                
                 // checking suppression if ys results as true
                 if($result===TRUE){
-                     echo "SUPPRESSED QUESTIONS";
-                    // $_row = $this->session->countarray;
                      $data['question'] =  $this->survey_model->get_question_next($question_id);
-                    // $this->session->unset_userdata("first_start");
-                }else{  
-                          echo "NEXT QUESTIONS";
-                          $data['question'] =  $this->survey_model->get_question_next($question_id);
-                          
-                     }
                     
-               /////echo  $_SESSION['fields_questions'][$_row];
+                }else{  
+                     $data['question'] =  $this->survey_model->get_question_next($question_id);
+                    
+                }
+                    
+                
                                 
        // INSERT CAPPSET TEMP DATA TO TEMP CAPPSTE TABLE 
-       //CHECK IS THIS QUESTION ID IS A CAPP SET IT IT IS CAPPSET THEN INSERT INTO TEMP CAPSET TABLE
+       //CHECK IS THIS QUESTION ID IS A CAPP SET ID IF  IT IS CAPPSET THEN INSERT INTO TEMP CAPSET TABLE
                      
                         $is_cappset_fields = $this->cap_model->check_cap($question_id);  
-                        
-                        echo "<pre>";
                         
                         if($is_cappset_fields !== FALSE){
                             $cappset_id  = $is_cappset_fields[0]->cappset_id;
                             
-                             for($i=0;$i<count($checked_answere);$i++){
-                         
-                                $inserting_tempcappset = array(
-                                                                "cappset_id" => $cappset_id,
-                                                                "question_id"=> $question_id,
-                                                                "answer_id"  => $checked_answere[$i]
-                                                            );
-
-                                $this->cap_model->insert_temp($inserting_tempcappset);
-
-                            }
+                            $data["cappset_suppression"] = $this->cap_model->fetch_suppression_details($cappset_id);
                             
+                            if($data["cappset_suppression"]>0){
+                
+                                        foreach ($data['cappset_suppression'] as $_cappest_sup){
+
+                                                if($_cappest_sup->suppression_type_name == 'CAPPSET SUPPRESSION'){
+
+                                                        for($i=0;$i<count($data['get_suppressed_questions']);$i++){
+
+                                                            $data['get_suppressed_questions'][$i]->suppression_id;
+                                                            
+
+                                                            $get_supress_feedback =$this->survey_model->find_suppression($data['cappset_suppression'][$i]->suppression_id);
+
+                                                                if($get_supress_feedback === TRUE){
+                                                                    $this->session->set_userdata('countarray', $this->session->countarray+1);
+                                                                    return TRUE;
+
+                                                                }else{
+                                                                   for($i=0;$i<count($checked_answere);$i++){
+
+                                                                            $inserting_tempcappset = array(
+                                                                                                            "cappset_id" => $cappset_id,
+                                                                                                            "question_id"=> $question_id,
+                                                                                                            "answer_id"  => $checked_answere[$i]
+                                                                                                        );
+
+                                                                            $this->cap_model->insert_temp($inserting_tempcappset);
+
+                                                                        }
+                                                                }
+                                                        }
+                                                }
+                                        } 
+                                
+                            }    
                             
                         }else{
                             
                         }
                         
                         
-                       
-                     
+                         
                 
                
                 
@@ -172,12 +208,11 @@ class Question_start_ci extends CI_Controller{
                             // MAIN SECTION TO VALIDATE ANSWERE FEILDS USING TEMP TABLE AND MATCH WITH REAL ANSWERE TABLE
                             //***********************************************************************************************
                             
-                                
                            
                                 for($i=0;$i<count($checked_answere);$i++){
                                      echo 1;
                                    $data_temp= array("linked_id"  => $linked_id,
-                                                     "qestion_id" =>$question_id,
+                                                     "question_id" =>$question_id,
                                                      "ans"      =>$checked_answere[$i],
                                                      "temp_flow_ranking"=>$indexed_id
                                        );
@@ -188,32 +223,29 @@ class Question_start_ci extends CI_Controller{
                     //**********************************************************************************************
                     /// END HERE 
                     //**********************************************************************************************    
-                                
-                  
-                   
-                      
-                    // $data['next_question'] = $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);                
+
+                    // CHECK IF VALUE IS SAME IN THE DATABASE AS USER SUBMITTED 
+                        $data['is_linked'] = $this->survey_model->linked_question($question_id); 
                         
-                    // $next_question = $data['next_question'][0]->question_id_fk;              
-
-
-                        // CHECK IF VALUE IS SAME IN THE DATABASE AS USER SUBMITTED 
-                                $data['is_linked'] = $this->survey_model->linked_question($_SESSION['fields_questions'][$_row]); 
-
-
+                            
                                     if($data['is_linked']!== FALSE){
                                         //TO BE WORKED ON AT HOME 
-
-                                            $data['getfields_answere_temp'] = $this->survey_model->fields_answers_from_temp($_SESSION['fields_questions'][$_row]);
-
-
+                                        
+                                       
+                                            $data['getfields_answere_temp'] = $this->survey_model->fields_answers_from_temp($question_id);
+                                            
+                                            echo "<pre>";
+                                            print_r($data['getfields_answere_temp']);
+                                            
+                                            
+                                            $merged_queries='';
                                                 ////SELECT FROM TEMP _ANSWERS AND CHECK IF IT EXISTS OR NOT  
 
                                                if(!empty($data['getfields_answere_temp'])){
                                                        for($i=0;$i<count($data['getfields_answere_temp']);$i++){
 
                                                            if($i===0){
-                                                                    $merged_queries .= "AND linkqs_id='".$data['getfields_answere_temp'][$i]->qestion_id."' AND text='". $data['getfields_answere_temp'][$i]->ans ."'";
+                                                                    $merged_queries .= "AND linkqs_id='".$data['getfields_answere_temp'][$i]->question_id."' AND text='". $data['getfields_answere_temp'][$i]->ans ."'";
                                                                }else{
                                                                     $merged_queries .= " OR  text='". $data['getfields_answere_temp'][$i]->ans ."'";
                                                                }   
@@ -222,34 +254,23 @@ class Question_start_ci extends CI_Controller{
                                                }
 
 
-                                                    $data['check_field_contains'] =  $this->survey_model->check_items($_SESSION['fields_questions'][$_row],$extra_query);
+                                                    $data['check_field_contains'] =  $this->survey_model->check_items($_SESSION['fields_questions'][$_row],$merged_queries);
 
-                                                                    // IF CHECKING IS SUCCESS THEN  ENTERS THE BOOL IF ELSE AND DISPLAY THE ANSWERE
+                                                   // IF CHECKING IS SUCCESS THEN  ENTERS THE BOOL IF ELSE AND DISPLAY THE ANSWERE
 
                                                        if($data['check_field_contains'] === TRUE){ 
                                                            echo "YES MATCHED AND NOW I WILL DYSPLAY THE MATCHED QUESTION";
 
 
-                                                                $data['question_next'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row ],$extra_query);
+                                                                $data['question_next'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);
 
                                                                 $this->print_on_form($data);  
                                                        }else{
-                                                           echo "NO IT WILL SKIP THE QUESTION";
+                                                             echo "NO IT WILL SKIP THE QUESTION";
+                                                             $this->session->set_userdata('countarray', $this->session->countarray+1);
+                                                             $data['question_next'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);
 
-
-                                                            $data['question_next'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row],$extra_query);
-                                                            if(!isset($data['question_next'])){
-
-                                                                echo isset($data['question_next']);
-
-                                                                $this->print_on_form($data); 
-                                                                $this->session->set_userdata('countarray', $_row + 1);
-                                                            } else{
-                                                                echo "survey closed";
-                                                                $this->session->sess_destroy();
-                                                            }   
-
-
+                                                             $this->print_on_form($data);  
                                                        }    
 
                                         }else{
@@ -263,10 +284,8 @@ class Question_start_ci extends CI_Controller{
 
                         }else{
                            
-                            
                             $this->check_cappset();
-                            
-                             echo "survey closed";
+                            echo "survey closed";
                             $this->session->sess_destroy();
                         }
                 }
@@ -336,6 +355,7 @@ class Question_start_ci extends CI_Controller{
         
         $data['get_suppressed_questions'] = $this->survey_model->fetch_suppression_details($quesion_id);
         $data['user_detail'] = $this->survey_model->form_data($_SESSION['USER']);
+        
          
             if(!empty($data['get_suppressed_questions'])){
                 
@@ -358,9 +378,24 @@ class Question_start_ci extends CI_Controller{
                                             return FALSE;
                                         }
                                 }
-                        }else{
+                        }elseif($_suppress->suppression_type_name == 'POSTCODE SUPPRESSION'){
                             
-                        } 
+                                 for($i=0;$i<count($data['get_suppressed_questions']);$i++){
+                                    
+                                    $data['get_suppressed_questions'][$i]->suppression_id;
+                                    $data['user_detail'][0]->phone;
+ 
+                                        $get_supress_feedback =$this->survey_model->find_suppression($data['get_suppressed_questions'][$i]->suppression_id,$data['user_detail'][0]->zip);
+                                    
+                                        if($get_supress_feedback === TRUE){
+                                            $this->session->set_userdata('countarray', $this->session->countarray+1);
+                                            return TRUE;
+                                            
+                                        }else{
+                                            return FALSE;
+                                        }
+                                }
+                        }
                 } 
             } 
 
@@ -373,64 +408,74 @@ class Question_start_ci extends CI_Controller{
         $search_stack =array();
         $values       =array();
         $get_cap_id  = $this->cap_model->capp();
-        echo "<pre>";
+        //echo "<pre>";
         //print_r($get_cap_id);
         
         for($i=0;$i<count($get_cap_id);$i++){ 
             
             $test  = $this->cap_model->get_cappset($get_cap_id[$i]->id);
-            //print_r($test);
+           // print_r($test);
             
             $values=array();
             $answers_temp=array();
             
-            foreach ($test as  $key => $val){
-                 $values[]     = $val->question_id;
-                 $answers_temp[] = $val->questions_answers_id;
-            }
-           
-            $answers_id  = implode(",", $answers_temp);
-            $question_id = implode(",", $values);
-            
-            echo 'ID-: '.$val->id.'- '.$question_id .'</br>';
-            
-                // update check every thing here
-                $is_success = $this->cap_model->get_temp_answer($val->id,$question_id,$answers_id);
-                
-                if ($is_success !== FALSE){
-                    
-                    if(count($test) === count($is_success)){
-                        
-                        echo "First check the record count is really the added capset question  check by using count capset with that id";
-                        echo "if success then count the last cappset record and substract - 1 from that";
-                        echo $val->id;
-                        
-                        $fields_capp = $this->cap_model->select_capp_usingid($val->id);
-                        
-                        
-                        $lead = $fields_capp[0]->lead_count - 1;
-                        echo $lead;
-                        
-                        $data=array("lead_count"=>$lead);
-                        
-                        $this->cap_model->update_cappcount($val->id,$data);
-                        
-                        
-                    } else {
-                        echo "FAILED";
+                if(isset($test)){
+                    foreach ($test as  $key => $val){
+                         $values[]     = $val->question_id;
+                         $answers_temp[] = $val->questions_answers_id;
                     }
-                    
-                   
-                    
-                    
-                    
-                    
-                    
-                }else{
-                    echo "Null";
+
+                    $answers_id  = implode(",", $answers_temp);
+                    $question_id = implode(",", $values);
+
+                    echo 'ID-: '.$val->id.'- '.$question_id .'</br>';
+
+                        // update check every thing here
+                        $is_success = $this->cap_model->get_temp_answer($val->id,$question_id,$answers_id);
+
+                                if ($is_success !== FALSE){
+
+                                            if(count($test) === count($is_success)){
+
+                                                echo "First check the record count is really the added capset question  check by using count capset with that id";
+                                                echo "if success then count the last cappset record and substract - 1 from that";
+                                                echo $val->id;
+
+
+                                                $fields_capp = $this->cap_model->select_capp_usingid($val->id);
+                                                // CHECK HERE FOR TYPE OF CAPPSET IS THIS AND WORK ACCORDINGLY
+
+                                                if($fields_capp[$i]->cappset_name == 'Total'){
+                                                    $lead = $fields_capp[$i]->lead_count - 1;
+                                                    echo $lead;
+                                                    $data=array("lead_count"=>$lead,
+                                                          );
+
+                                                    $this->cap_model->update_cappcount($val->id,$data);
+                                                }
+
+
+
+
+                                            } else {
+                                                echo "FAILED";
+                                            }
+
+                                }else{
+                                    echo "Null";
+                                }
                 }
         }
         
+    }
+    
+    
+    public function terminate(){
+        
+        $data["template"] = "thank_youpage.php";
+        
+        
+        $this->load->view('base_html',$data);
     }
     
     

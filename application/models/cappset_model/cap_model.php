@@ -17,7 +17,7 @@ class cap_model extends CI_Model{
             }
         $SQLtxt = "SELECT *,cappset_is_lead.question_id from cappset_is_lead INNER JOIN  questions on 
                 cappset_is_lead.question_id = questions.id 
-                INNER JOIN  CAPPSET ON cappset.id = cappset_is_lead.cappset_id where questions.id=$question_id $query";
+                INNER JOIN  CAPPSET ON cappset.id = cappset_is_lead.cappset_id where questions.id=$question_id $query AND cappset.status=1";
                 
         
                 $fields = $this->db->query($SQLtxt);
@@ -102,7 +102,7 @@ class cap_model extends CI_Model{
  
     
     public function select_capp_usingid($cappid){
-         $SQLtxt ="SELECT * from cappset where id =$cappid ";
+         $SQLtxt ="SELECT * FROM survey_crm.cappset INNER JOIN cappset_types ON cappset.fk_cappsetid = cappset_types.idtypes  where id =$cappid ";
          $fields = $this->db->query($SQLtxt);
             if($fields->num_rows()>0)return $fields->result();
             else FALSE;
@@ -127,6 +127,54 @@ class cap_model extends CI_Model{
         
     }
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //*************************************************************************
+    // CHECK CAPPSET SUPPRESSION 
+    //*************************************************************************
+    
+    //****************************************************************************************************
+    // FETCH CAPPSET SUPPRESSION DETAILS  
+    //****************************************************************************************************
+    
+    public function fetch_suppression_details($cappset_id){
+        $SQLtxt = "SELECT * FROM  cappset_suppression INNER JOIN  suppression ON 
+                   cappset_suppression.suppression_id = suppression.id
+                   INNER JOIN suppression_types ON 
+                   suppression.suppression_type_id = suppression_types.id  WHERE  cappset_id= $cappset_id";
+
+        
+        $fields = $this->db->query($SQLtxt);
+        if($fields->num_rows()>0) return $fields->result();
+        else return FALSE;
+        
+    }
+    
+    //****************************************************************************************************
+    // END FETCH CAPPSET SUPPRESSION DETAILS 
+    //****************************************************************************************************
+     
+    
+    public function find_suppression($sup_id){
+            $SQLtxt = "SELECT * FROM suppression_values WHERE suppression_id=$sup_id";
+            
+            $fields = $this->db->query($SQLtxt);
+            //if($fields->num_rows()>0)return $fields->result();
+            if($fields->num_rows()>0)return TRUE;
+            return FALSE;
+            
+    }
     
     
     
