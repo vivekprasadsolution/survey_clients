@@ -27,7 +27,7 @@ class cap_model extends CI_Model{
     }
     
     public function check_cap($question){
-         $SQLtxt = "SELECT *,cappset_is_lead.question_id from cappset_is_lead INNER JOIN  questions on 
+         $SQLtxt = "SELECT distinct(cappset_is_lead.cappset_id) from cappset_is_lead INNER JOIN  questions on 
                 cappset_is_lead.question_id = questions.id 
                 INNER JOIN  cappset ON cappset.id = cappset_is_lead.cappset_id 
                  INNER JOIN cappset_types  on cappset_types.idtypes =cappset.fk_cappsetid  where cappset_is_lead.question_id = $question";

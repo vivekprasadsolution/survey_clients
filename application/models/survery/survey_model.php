@@ -89,7 +89,7 @@ class survey_model extends CI_Model{
     }
     
     public function check_items($question_id,$extra_queries){
-    echo   $SQLtxt="SELECT text FROM `survey_link_answers` WHERE question_id =$question_id   $extra_queries  LIMIT 1";
+       $SQLtxt="SELECT text FROM `survey_link_answers` WHERE question_id =$question_id   $extra_queries  LIMIT 1";
         
             $fields= $this->db->query($SQLtxt);
             if($fields->num_rows() > 0) return TRUE;
@@ -140,7 +140,7 @@ class survey_model extends CI_Model{
      
     
     public function find_suppression($sup_id,$supp_values=''){
-            $SQLtxt = "SELECT * FROM suppression_values WHERE suppression_id=$sup_id and value= $supp_values";
+           echo $SQLtxt = "SELECT * FROM suppression_values WHERE suppression_id=$sup_id and value='$supp_values'";
             
             $fields = $this->db->query($SQLtxt);
             //if($fields->num_rows()>0)return $fields->result();

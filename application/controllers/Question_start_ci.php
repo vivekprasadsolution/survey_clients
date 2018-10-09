@@ -31,7 +31,6 @@ class Question_start_ci extends CI_Controller{
     // GET USER INFORMATION FROM USER WHO IS SUBMITTING SURVEY FORM
     //**********************************************************************************************    
         $_SESSION['USER']=1;
-            
         $data['user_information'] =  $this->survey_model->get_formdata($_SESSION['USER']);
        
     //**********************************************************************************************
@@ -69,7 +68,10 @@ class Question_start_ci extends CI_Controller{
         $result = $this->check_suppression($_SESSION['fields_questions'][0]);   
             
         if($result===TRUE){
+            
              $_row = $this->session->countarray + 1;
+             $this->session->set_userdata('countarray', $this->session->countarray + 1);
+             
              $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row],$extra_query);
         }else{
           
@@ -80,17 +82,13 @@ class Question_start_ci extends CI_Controller{
         // STEP 2 SUPPRESSION CHECK END
         //**************************************************************************************** 
                  
- 
-        
         $this->session->set_userdata('first_start', 0);
         
         $_SESSION['question_id'] = array($data['question'][0]->linked_question_id);
         
         $this->session->set_userdata('countarray', 1);
         $this->session->set_userdata('records',count($_SESSION['fields_questions']));
-        
-      
-        
+                
         $this->load->view('base_html',$data);
         
     }
@@ -111,49 +109,49 @@ class Question_start_ci extends CI_Controller{
          $checked_answere = $this->input->post('seleted_checkbox');
          
          
+  
+         
+         
         if(is_null($this->session->countarray)){
                  $this->survey_model->delete_items();          
         }else{
                 
                if($this->session->records > $this->session->countarray){
                    
-                 $_row = $this->session->countarray;   
-                 
-                //echo $question_id_server;
-                 
-                $data['is_linked'] = $this->survey_model->linked_question($question_id_server);
+                $_row = $this->session->countarray;   
+                $result = $this->check_suppression($_SESSION['fields_questions'][$_row]);   
+        
+    //**********************************************************************************************
+    // CHECKING SUPPRESSION IF RESULT YES THEN SUPPRESSION IS TRUE
+    //**********************************************************************************************
+            var_dump($result);
+    
                 
-                print_r($data['is_linked']);
                 
-                
-                if($data['is_linked'] !==FALSE){
-                    $question_id = $data['is_linked'][0]->question_linked;
-                } else {
-                    $question_id = $question_id_server;
-                }
-                 
-                 
-                $result = $this->check_suppression($question_id);   
-                
-                 
-                
-                // checking suppression if ys results as true
-                if($result===TRUE){
-                     $data['question'] =  $this->survey_model->get_question_next($question_id);
-                    
-                }else{  
-                     $data['question'] =  $this->survey_model->get_question_next($question_id);
-                    
-                }
-                    
-                
-                                
-       // INSERT CAPPSET TEMP DATA TO TEMP CAPPSTE TABLE 
-       //CHECK IS THIS QUESTION ID IS A CAPP SET ID IF  IT IS CAPPSET THEN INSERT INTO TEMP CAPSET TABLE
+                if($result == TRUE){
                      
-                        $is_cappset_fields = $this->cap_model->check_cap($question_id);  
-                        
-                        if($is_cappset_fields !== FALSE){
+                     $_row = $this->session->countarray + 1;
+                     $this->session->set_userdata('countarray', $this->session->countarray + 1);
+                     $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);
+                }else{  
+                    
+                     $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);
+                }
+                    
+     //**********************************************************************************************
+    // END CHECKING SUPPRESSION IF RESULT NO THEN SUPPRESSION IS FALSE
+    //**********************************************************************************************
+            
+                                
+    // INSERT CAPPSET TEMP DATA TO TEMP CAPPSET TABLE 
+    //CHECK IS THIS QUESTION ID IS A CAPP SET ID IF  IT IS CAPPSET THEN INSERT INTO TEMP CAPSET TABLE
+                     
+                $is_cappset_fields = $this->cap_model->check_cap($_SESSION['fields_questions'][$_row]);  
+                
+                
+                
+                
+                        if($is_cappset_fields > 0){
                             $cappset_id  = $is_cappset_fields[0]->cappset_id;
                             
                             $data["cappset_suppression"] = $this->cap_model->fetch_suppression_details($cappset_id);
@@ -177,7 +175,6 @@ class Question_start_ci extends CI_Controller{
 
                                                                 }else{
                                                                    for($i=0;$i<count($checked_answere);$i++){
-
                                                                             $inserting_tempcappset = array(
                                                                                                             "cappset_id" => $cappset_id,
                                                                                                             "question_id"=> $question_id,
@@ -194,8 +191,6 @@ class Question_start_ci extends CI_Controller{
                                 
                             }    
                             
-                        }else{
-                            
                         }
                         
                         
@@ -210,9 +205,9 @@ class Question_start_ci extends CI_Controller{
                             
                            
                                 for($i=0;$i<count($checked_answere);$i++){
-                                     echo 1;
+                                    
                                    $data_temp= array("linked_id"  => $linked_id,
-                                                     "question_id" =>$question_id,
+                                                     "question_id" =>$_SESSION['fields_questions'][$_row],
                                                      "ans"      =>$checked_answere[$i],
                                                      "temp_flow_ranking"=>$indexed_id
                                        );
@@ -225,17 +220,17 @@ class Question_start_ci extends CI_Controller{
                     //**********************************************************************************************    
 
                     // CHECK IF VALUE IS SAME IN THE DATABASE AS USER SUBMITTED 
-                        $data['is_linked'] = $this->survey_model->linked_question($question_id); 
+                        $data['is_linked'] = $this->survey_model->linked_question($_SESSION['fields_questions'][$_row]); 
                         
                             
                                     if($data['is_linked']!== FALSE){
                                         //TO BE WORKED ON AT HOME 
                                         
                                        
-                                            $data['getfields_answere_temp'] = $this->survey_model->fields_answers_from_temp($question_id);
+                                            $data['getfields_answere_temp'] = $this->survey_model->fields_answers_from_temp($_SESSION['fields_questions'][$_row]);
                                             
-                                            echo "<pre>";
-                                            print_r($data['getfields_answere_temp']);
+                                          //  echo "<pre>";
+                                           // print_r($data['getfields_answere_temp']);
                                             
                                             
                                             $merged_queries='';
@@ -351,10 +346,13 @@ class Question_start_ci extends CI_Controller{
     
     
     
-    public function check_suppression($quesion_id){
+    public function check_suppression($quesion_next_id){
+          
+        echo $quesion_next_id;
         
-        $data['get_suppressed_questions'] = $this->survey_model->fetch_suppression_details($quesion_id);
+        $data['get_suppressed_questions'] = $this->survey_model->fetch_suppression_details($quesion_next_id);
         $data['user_detail'] = $this->survey_model->form_data($_SESSION['USER']);
+        
         
          
             if(!empty($data['get_suppressed_questions'])){
@@ -382,16 +380,15 @@ class Question_start_ci extends CI_Controller{
                             
                                  for($i=0;$i<count($data['get_suppressed_questions']);$i++){
                                     
-                                    $data['get_suppressed_questions'][$i]->suppression_id;
-                                    $data['user_detail'][0]->phone;
  
                                         $get_supress_feedback =$this->survey_model->find_suppression($data['get_suppressed_questions'][$i]->suppression_id,$data['user_detail'][0]->zip);
-                                    
-                                        if($get_supress_feedback === TRUE){
-                                            $this->session->set_userdata('countarray', $this->session->countarray+1);
+                                       
+                                        if($get_supress_feedback == TRUE){
+                                            echo "SAHI HAI SUPPRESSION";
+                                            $this->session->set_userdata('countarray', $this->session->countarray + 1);
                                             return TRUE;
-                                            
                                         }else{
+                                            echo "GALAT HAI SUPPRESSION";
                                             return FALSE;
                                         }
                                 }
