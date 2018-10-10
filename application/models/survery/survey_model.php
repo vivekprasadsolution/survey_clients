@@ -57,11 +57,15 @@ class survey_model extends CI_Model{
     ///
     
     public function all_question_withquery_validation($filtered_data){
-        $SQLtxt = "SELECT * FROM survey_question_flow as SF inner join questions as Q on Q.id= SF.question_id_fk 
+      //echo  $SQLtxt = "SELECT * FROM survey_question_flow as SF inner join questions as Q on Q.id= SF.question_id_fk 
+      //          INNER JOIN question_type as QT on QT.id = Q.question_type_id 
+      //          WHERE campaign_fk=1  HAVING Q.status=1 
+      //          $filtered_data ORDER BY SF.survey_flow_id ";
+      
+        echo $SQLtxt ="SELECT * FROM question_ranking as QR inner join questions as Q on Q.id= QR.question_id
                 INNER JOIN question_type as QT on QT.id = Q.question_type_id 
-                WHERE campaign_fk=1  HAVING Q.status=1 
-                $filtered_data ORDER BY SF.survey_flow_id ";
-        
+                WHERE   Q.status=1 $filtered_data
+                ORDER BY QR.rank";
          
        
        $fields = $this->db->query($SQLtxt); 
@@ -140,7 +144,7 @@ class survey_model extends CI_Model{
      
     
     public function find_suppression($sup_id,$supp_values=''){
-           echo $SQLtxt = "SELECT * FROM suppression_values WHERE suppression_id=$sup_id and value='$supp_values'";
+            $SQLtxt = "SELECT * FROM suppression_values WHERE suppression_id=$sup_id and value='$supp_values'";
             
             $fields = $this->db->query($SQLtxt);
             //if($fields->num_rows()>0)return $fields->result();

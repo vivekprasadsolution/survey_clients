@@ -26,12 +26,12 @@ class Question_start_ci extends CI_Controller{
     public function survey_questions_probing(){
         $data['template'] = "survey/question_run.php";
         $data['survey'] = $this->survey_model->get_survey('1');
-
+        $extra_query='';
     //**********************************************************************************************
     // GET USER INFORMATION FROM USER WHO IS SUBMITTING SURVEY FORM
     //**********************************************************************************************    
-        $_SESSION['USER']=1;
-        $data['user_information'] =  $this->survey_model->get_formdata($_SESSION['USER']);
+        
+        $data['user_information'] =  $this->survey_model->get_formdata($_SESSION['id_user']);
        
     //**********************************************************************************************
     // END GET USER INFORMATION FROM USER WHO IS SUBMITTING SURVEY FORM
@@ -55,12 +55,40 @@ class Question_start_ci extends CI_Controller{
         /// END CHECK THE USER IS MALE OR FEMALE FROM  TEMP TABLE TEMP TABLE 
         //**********************************************************************************************   
          
+            
+            
          $data['fields_records'] =  $this->survey_model->all_question_withquery_validation($extra_query);  
-        
+      
+         
          foreach ($data['fields_records'] as $ques) {
-             $_SESSION['fields_questions'][] = $ques->question_id_fk ;
+             $_SESSION['fields_questions'][] = $ques->question_id;
          }
         
+         
+        //**********************************************************************************************
+        /// STEP 1 CHECK CAPPSET 
+        //**********************************************************************************************   
+          
+        $result1 = $this->check_capp_suppression($_SESSION['fields_questions'][0]);   
+            
+        if($result1 === TRUE){
+            
+            $_row = $this->session->countarray + 1;
+            $this->session->set_userdata('countarray', $this->session->countarray + 1);
+             
+            $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row],$extra_query);
+          
+        }else{
+          
+             $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][0],$extra_query);
+        }
+         
+         
+         
+         
+         
+         
+         
         //**************************************************************************************** 
         // STEP 2 SUPPRESSION CHECK 
         //**************************************************************************************** 
@@ -84,7 +112,7 @@ class Question_start_ci extends CI_Controller{
                  
         $this->session->set_userdata('first_start', 0);
         
-        $_SESSION['question_id'] = array($data['question'][0]->linked_question_id);
+       // $_SESSION['question_id'] = array($data['question'][0]->linked_question_id);
         
         $this->session->set_userdata('countarray', 1);
         $this->session->set_userdata('records',count($_SESSION['fields_questions']));
@@ -138,65 +166,12 @@ class Question_start_ci extends CI_Controller{
                      $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);
                 }
                     
-     //**********************************************************************************************
+    //**********************************************************************************************
     // END CHECKING SUPPRESSION IF RESULT NO THEN SUPPRESSION IS FALSE
     //**********************************************************************************************
             
                                 
-    // INSERT CAPPSET TEMP DATA TO TEMP CAPPSET TABLE 
-    //CHECK IS THIS QUESTION ID IS A CAPP SET ID IF  IT IS CAPPSET THEN INSERT INTO TEMP CAPSET TABLE
-                     
-                $is_cappset_fields = $this->cap_model->check_cap($_SESSION['fields_questions'][$_row]);  
-                
-                
-                
-                
-                        if($is_cappset_fields > 0){
-                            $cappset_id  = $is_cappset_fields[0]->cappset_id;
-                            
-                            $data["cappset_suppression"] = $this->cap_model->fetch_suppression_details($cappset_id);
-                            
-                            if($data["cappset_suppression"]>0){
-                
-                                        foreach ($data['cappset_suppression'] as $_cappest_sup){
-
-                                                if($_cappest_sup->suppression_type_name == 'CAPPSET SUPPRESSION'){
-
-                                                        for($i=0;$i<count($data['get_suppressed_questions']);$i++){
-
-                                                            $data['get_suppressed_questions'][$i]->suppression_id;
-                                                            
-
-                                                            $get_supress_feedback =$this->survey_model->find_suppression($data['cappset_suppression'][$i]->suppression_id);
-
-                                                                if($get_supress_feedback === TRUE){
-                                                                    $this->session->set_userdata('countarray', $this->session->countarray+1);
-                                                                    return TRUE;
-
-                                                                }else{
-                                                                   for($i=0;$i<count($checked_answere);$i++){
-                                                                            $inserting_tempcappset = array(
-                                                                                                            "cappset_id" => $cappset_id,
-                                                                                                            "question_id"=> $question_id,
-                                                                                                            "answer_id"  => $checked_answere[$i]
-                                                                                                        );
-
-                                                                            $this->cap_model->insert_temp($inserting_tempcappset);
-
-                                                                        }
-                                                                }
-                                                        }
-                                                }
-                                        } 
-                                
-                            }    
-                            
-                        }
-                        
-                        
-                         
-                
-               
+   
                 
                             //***********************************************************************************************
                             // GET VALUES FROM CHECK BOX AND SENT IT TO TEMP TABLE 
@@ -339,6 +314,7 @@ class Question_start_ci extends CI_Controller{
 
                        
         } else {
+            
             echo "survey closed";
                  $this->session->sess_destroy();
         } 
@@ -351,8 +327,9 @@ class Question_start_ci extends CI_Controller{
         echo $quesion_next_id;
         
         $data['get_suppressed_questions'] = $this->survey_model->fetch_suppression_details($quesion_next_id);
-        $data['user_detail'] = $this->survey_model->form_data($_SESSION['USER']);
+        $data['user_detail'] = $this->survey_model->form_data($_SESSION['id_user']);
         
+        print_r($data['user_detail']);      
         
          
             if(!empty($data['get_suppressed_questions'])){
@@ -399,6 +376,62 @@ class Question_start_ci extends CI_Controller{
     }
     
     
+    
+    public function check_capp_suppression($quesion_next_id){
+        
+                $is_cappset_fields = $this->cap_model->check_cap($quesion_next_id);  
+                
+                        if($is_cappset_fields > 0){
+                            $cappset_id  = $is_cappset_fields[0]->cappset_id;
+                            
+                            $data["cappset_suppression"] = $this->cap_model->fetch_suppression_details($cappset_id);
+                            
+                            if($data["cappset_suppression"]>0){
+                
+                                        foreach ($data['cappset_suppression'] as $_cappest_sup){
+
+                                                if($_cappest_sup->suppression_type_name == 'CAPPSET SUPPRESSION'){
+
+                                                        for($i=0;$i<count($data['get_suppressed_questions']);$i++){
+
+                                                            $data['get_suppressed_questions'][$i]->suppression_id;
+                                                            
+
+                                                            $get_supress_feedback =$this->survey_model->find_suppression($data['cappset_suppression'][$i]->suppression_id);
+
+                                                                if($get_supress_feedback === TRUE){
+                                                                    $this->session->set_userdata('countarray', $this->session->countarray+1);
+                                                                    return TRUE;
+
+                                                                }else{
+                                                                   for($i=0;$i<count($checked_answere);$i++){
+                                                                            $inserting_tempcappset = array(
+                                                                                                            "cappset_id" => $cappset_id,
+                                                                                                            "question_id"=> $question_id,
+                                                                                                            "answer_id"  => $checked_answere[$i]
+                                                                                                        );
+
+                                                                            $this->cap_model->insert_temp($inserting_tempcappset);
+
+                                                                        }
+                                                                }
+                                                        }
+                                                }
+                                        } 
+                                
+                                } else {
+                                     echo "NO SUPPRESSION ON CAPPSET";
+                                }    
+                            
+                        }else{
+                            echo "NOT A CAPPSET";
+                        }
+                        
+                        
+                         
+                
+               
+    }
     
     
      public function check_cappset(){
