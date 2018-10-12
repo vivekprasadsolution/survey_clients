@@ -26,6 +26,8 @@
     
     $(document).ready(function(){
      
+        
+     
        
        $(document).on("click","button.next_form", function(e){
            e.preventDefault();
@@ -171,15 +173,16 @@
     
     <h1 align="center"><?php  echo $survey[0]->survey_name; ?></h1>
     
-    
-    
+        
+    <?php // print_r($question);?>
         
     <div class="box-body" id="form_container">      
         <div class="row"> 
             <div class="col-md-12 ">
-                <div class="container form-control shadow">
+                <div class="container form-control shadow" toggle="tooltip" title="<?php echo $question[0]->question_code; ?>">
                 <form id="f1" name="form" method="POST">   
                     
+                    <input type="text" name="control_type" value="<?php echo $question[0]->question_type_name; ?>">
                     <input type="text" name="question_id" value="<?php echo $question[0]->question_id_fk; ?>">
                     <input type="text" name="next_id" value="<?php echo $question[0]->flow_ranking; ?>">
                     <input type="text" name="linked_id" value="<?php //echo $question[0]->question_primary; ?>">
@@ -187,13 +190,13 @@
                     <div id="linkedid-<?php echo $question[0]->survey_flow_id; ?>" class=" form-group ">
                         <h4><?php echo $question[0]->flow_ranking; ?>.<?php echo $question[0]->question_text;?> <span class="fa  fa-check-circle saved"></span></h4>
                             <?php if($question[0]->question_type_name ==='Dropdown Type')  :?>
-                        <select>
+                        <select id="" name="dropdown_type">
                             <?php print getfields_type($question[0]->question_id_fk); ?>
                         </select>
-                            <?php elseif($question[0]->question_type_name ==='Check Box Type')  :?>
-                        <option id="option1">
+                            <?php elseif($question[0]->question_type_name === 'Check Box Type')  :?>
+                        <select id="check_1" name="check_box" >
                             <?php print getcheckbox_type($question[0]->question_id_fk); ?>
-                        </option>    
+                        </select>    
                             <?php endif; ?>
                             
 

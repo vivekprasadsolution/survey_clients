@@ -32,7 +32,7 @@ class Question_start_ci extends CI_Controller{
     //**********************************************************************************************    
         
         $data['user_information'] =  $this->survey_model->get_formdata($_SESSION['id_user']);
-       
+      
     //**********************************************************************************************
     // END GET USER INFORMATION FROM USER WHO IS SUBMITTING SURVEY FORM
     //**********************************************************************************************          
@@ -58,34 +58,33 @@ class Question_start_ci extends CI_Controller{
             
             
          $data['fields_records'] =  $this->survey_model->all_question_withquery_validation($extra_query);  
-      
+       
          
          foreach ($data['fields_records'] as $ques) {
-             $_SESSION['fields_questions'][] = $ques->question_id;
+             $_SESSION['fields_questions'][] = $ques->pk_question;
          }
         
+         
+       //  print_r($_SESSION['fields_questions']);
          
         //**********************************************************************************************
         /// STEP 1 CHECK CAPPSET 
         //**********************************************************************************************   
           
-        $result1 = $this->check_capp_suppression($_SESSION['fields_questions'][0]);   
+     //  $result1 = $this->check_capp_suppression($_SESSION['fields_questions'][0]);   
             
-        if($result1 === TRUE){
-            
-            $_row = $this->session->countarray + 1;
-            $this->session->set_userdata('countarray', $this->session->countarray + 1);
+       // if($result1 === TRUE){
+       ///     
+        //    $_row = $this->session->countarray + 1;
+        //    $this->session->set_userdata('countarray', $this->session->countarray + 1);
              
-            $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row],$extra_query);
+        //   $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row],$extra_query);
           
-        }else{
+        //}else{
           
-             $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][0],$extra_query);
-        }
-         
-         
-         
-         
+        //     $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][0],$extra_query);
+             
+     //  }
          
          
          
@@ -95,17 +94,17 @@ class Question_start_ci extends CI_Controller{
          
         $result = $this->check_suppression($_SESSION['fields_questions'][0]);   
             
-        if($result===TRUE){
+        if($result === TRUE){
             
-             $_row = $this->session->countarray + 1;
              $this->session->set_userdata('countarray', $this->session->countarray + 1);
+             $_row = $this->session->countarray + 1;
              
              $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row],$extra_query);
         }else{
-          
              $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][0],$extra_query);
         }
         
+       
         //**************************************************************************************** 
         // STEP 2 SUPPRESSION CHECK END
         //**************************************************************************************** 
@@ -116,6 +115,8 @@ class Question_start_ci extends CI_Controller{
         
         $this->session->set_userdata('countarray', 1);
         $this->session->set_userdata('records',count($_SESSION['fields_questions']));
+        
+        
                 
         $this->load->view('base_html',$data);
         
@@ -129,13 +130,38 @@ class Question_start_ci extends CI_Controller{
     
     public function next_question(){
         
+         $checked_answere="";
          $cappset_values = '';
          $old_question_id = array();
          $question_id_server = $this->input->post('question_id');
          $indexed_id = $this->input->post('next_id');
          $linked_id = $this->input->post('linked_id'); 
-         $checked_answere = $this->input->post('seleted_checkbox');
          
+         
+         //$checked_answer = $this->input->post('check_box');
+         //$checked_answere = $this->input->post('dropdown_type');
+         $control_type = $this->input->post('control_type');
+         
+         switch ($control_type){
+                    case "Radio Type": 
+                                       $checked_answer = $this->input->post('');
+                                       break;
+                    case "Check Box Type":
+                                       $checked_answer = $this->input->post('check_box');
+                                       break;
+                    case "Dropdown Type":
+                                       $checked_answer = $this->input->post('dropdown_type');
+                                       break;
+                    case "Dropdown Multiple":
+                                       $checked_answer = $this->input->post('');
+                                       break;
+                    case "Text Type":    
+                                       $checked_answer = $this->input->post('');
+                                       break;
+                    case "Textarea Type":    
+                                       $checked_answer = $this->input->post('');
+                                       break;
+         }
          
   
          
@@ -146,23 +172,19 @@ class Question_start_ci extends CI_Controller{
                 
                if($this->session->records > $this->session->countarray){
                    
-                $_row = $this->session->countarray;   
+                $_row = $this->session->countarray ;   
                 $result = $this->check_suppression($_SESSION['fields_questions'][$_row]);   
         
     //**********************************************************************************************
     // CHECKING SUPPRESSION IF RESULT YES THEN SUPPRESSION IS TRUE
     //**********************************************************************************************
-            var_dump($result);
-    
-                
+        
                 
                 if($result == TRUE){
-                     
                      $_row = $this->session->countarray + 1;
                      $this->session->set_userdata('countarray', $this->session->countarray + 1);
                      $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);
                 }else{  
-                    
                      $data['question'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);
                 }
                     
@@ -172,40 +194,43 @@ class Question_start_ci extends CI_Controller{
             
                                 
    
-                
-                            //***********************************************************************************************
-                            // GET VALUES FROM CHECK BOX AND SENT IT TO TEMP TABLE 
-                            // MAIN SECTION TO VALIDATE ANSWERE FEILDS USING TEMP TABLE AND MATCH WITH REAL ANSWERE TABLE
-                            //***********************************************************************************************
-                            
-                           
+
+        //***********************************************************************************************
+        // GET VALUES FROM CHECK BOX AND SENT IT TO TEMP TABLE 
+        // MAIN SECTION TO VALIDATE ANSWERE FEILDS USING TEMP TABLE AND MATCH WITH REAL ANSWERE TABLE
+        //***********************************************************************************************
+                        if(count($checked_answer) > 1){
                                 for($i=0;$i<count($checked_answere);$i++){
                                     
                                    $data_temp= array("linked_id"  => $linked_id,
-                                                     "question_id" =>$_SESSION['fields_questions'][$_row],
-                                                     "ans"      =>$checked_answere[$i],
+                                                     "question_id" =>$question_id_server,
+                                                     "ans"      =>$checked_answer[$i],
                                                      "temp_flow_ranking"=>$indexed_id
                                        );
 
-                                   $this->survey_model->insert_temp($data_temp);    
+                                    $this->survey_model->insert_temp($data_temp);    
                                 }            
+                        }else{
+                                    $data_temp= array("linked_id"  => $linked_id,
+                                                     "question_id" =>$question_id_server,
+                                                     "ans"      =>$checked_answer,
+                                                     "temp_flow_ranking"=>$indexed_id
+                                       );
 
+                                    $this->survey_model->insert_temp($data_temp);    
+                        }
                     //**********************************************************************************************
                     /// END HERE 
                     //**********************************************************************************************    
 
                     // CHECK IF VALUE IS SAME IN THE DATABASE AS USER SUBMITTED 
-                        $data['is_linked'] = $this->survey_model->linked_question($_SESSION['fields_questions'][$_row]); 
+                        $data['is_linked'] = $this->survey_model->linked_question($question_id_server); 
                         
                             
                                     if($data['is_linked']!== FALSE){
-                                        //TO BE WORKED ON AT HOME 
+                                            echo "Linked";
                                         
-                                       
-                                            $data['getfields_answere_temp'] = $this->survey_model->fields_answers_from_temp($_SESSION['fields_questions'][$_row]);
-                                            
-                                          //  echo "<pre>";
-                                           // print_r($data['getfields_answere_temp']);
+                                            $data['getfields_answere_temp'] = $this->survey_model->fields_answers_from_temp($question_id_server);
                                             
                                             
                                             $merged_queries='';
@@ -215,17 +240,19 @@ class Question_start_ci extends CI_Controller{
                                                        for($i=0;$i<count($data['getfields_answere_temp']);$i++){
 
                                                            if($i===0){
-                                                                    $merged_queries .= "AND linkqs_id='".$data['getfields_answere_temp'][$i]->question_id."' AND text='". $data['getfields_answere_temp'][$i]->ans ."'";
+                                                                    $merged_queries .= "AND linkqs_id='".$_SESSION['fields_questions'][$_row]."' AND ans_id='". $data['getfields_answere_temp'][$i]->ans ."'";
                                                                }else{
-                                                                    $merged_queries .= " OR  text='". $data['getfields_answere_temp'][$i]->ans ."'";
+                                                                    $merged_queries .= " OR  ans_id='". $data['getfields_answere_temp'][$i]->ans ."'";
                                                                }   
                                                        }
 
                                                }
 
 
-                                                    $data['check_field_contains'] =  $this->survey_model->check_items($_SESSION['fields_questions'][$_row],$merged_queries);
-
+                                                    $data['check_field_contains'] =  $this->survey_model->check_items($question_id_server,$merged_queries);
+                                                        
+                                                    var_dump($data['check_field_contains']);
+                                                    
                                                    // IF CHECKING IS SUCCESS THEN  ENTERS THE BOOL IF ELSE AND DISPLAY THE ANSWERE
 
                                                        if($data['check_field_contains'] === TRUE){ 
@@ -237,13 +264,15 @@ class Question_start_ci extends CI_Controller{
                                                                 $this->print_on_form($data);  
                                                        }else{
                                                              echo "NO IT WILL SKIP THE QUESTION";
-                                                             $this->session->set_userdata('countarray', $this->session->countarray+1);
+                                                             $_row = $this->session->countarray + 1;
+                                                             $this->session->set_userdata('countarray', $_row + 1);
                                                              $data['question_next'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);
 
                                                              $this->print_on_form($data);  
                                                        }    
 
                                         }else{
+                                                echo "NO LINK";
                                                    
                                                     $data['question_next'] =  $this->survey_model->get_question_next($_SESSION['fields_questions'][$_row]);
                                                     $this->print_on_form($data);     
@@ -275,8 +304,9 @@ class Question_start_ci extends CI_Controller{
                     echo "</br>";
                     echo "<div class='row'>";
                     echo "<div class='col-md-12'>";
-                    echo "<div id='linkedid-{$data['question_next'][0]->survey_flow_id}' class='form-control shadow'>";
+                    echo "<div id='linkedid-{$data['question_next'][0]->survey_flow_id}' class='form-control shadow'   toggle='tooltip' title= {$data['question_next'][0]->question_code}  >";
                     echo "<form id='f{$data['question_next'][0]->survey_flow_id}' name='f{$data['question_next'][0]->survey_flow_id}' method='POST'>";
+                    echo "<input type='text' name='control_type' value='{$data['question_next'][0]->question_type_name}'>";
                     echo "<input type='text' name='question_id' value='{$data['question_next'][0]->question_id_fk}'>";
                     echo "<input type='text' name='next_id' value='{$data['question_next'][0]->flow_ranking}'>";
                     echo "<input type='text' name='linked_id' value='{$data['question_next'][0]->linked_question_id}'>";  
@@ -287,7 +317,7 @@ class Question_start_ci extends CI_Controller{
                        }elseif ($data['question_next'][0]->question_type_name ==='Check Box Type' ) {
                            print getcheckbox_type($data['question_next'][0]->question_id_fk);
                        }elseif ($data['question_next'][0]->question_type_name ==='Dropdown Type' ) {
-                           echo "<select id='' name='dropdowntype[]' >";
+                           echo "<select id='' name='dropdown_type' >";
                            print getfields_type($data['question_next'][0]->question_id_fk);
                            echo "</select>";
                        }elseif ($data['question_next'][0]->question_type_name ==='Dropdown Multiple' ) {
@@ -329,8 +359,7 @@ class Question_start_ci extends CI_Controller{
         $data['get_suppressed_questions'] = $this->survey_model->fetch_suppression_details($quesion_next_id);
         $data['user_detail'] = $this->survey_model->form_data($_SESSION['id_user']);
         
-        print_r($data['user_detail']);      
-        
+         
          
             if(!empty($data['get_suppressed_questions'])){
                 
@@ -353,11 +382,10 @@ class Question_start_ci extends CI_Controller{
                                             return FALSE;
                                         }
                                 }
-                        }elseif($_suppress->suppression_type_name == 'POSTCODE SUPPRESSION'){
+                        }elseif($_suppress->suppression_type_name == 'FULL POSTCODE SUPPRESSION'){
                             
                                  for($i=0;$i<count($data['get_suppressed_questions']);$i++){
                                     
- 
                                         $get_supress_feedback =$this->survey_model->find_suppression($data['get_suppressed_questions'][$i]->suppression_id,$data['user_detail'][0]->zip);
                                        
                                         if($get_supress_feedback == TRUE){
@@ -369,6 +397,8 @@ class Question_start_ci extends CI_Controller{
                                             return FALSE;
                                         }
                                 }
+                        }elseif($_suppress->suppression_type_name == 'PARTIAL POSTCODE SUPPRESSION'){
+                                // HERE LIKE TO BE USED 
                         }
                 } 
             } 
@@ -484,9 +514,6 @@ class Question_start_ci extends CI_Controller{
                                                     $this->cap_model->update_cappcount($val->id,$data);
                                                 }
 
-
-
-
                                             } else {
                                                 echo "FAILED";
                                             }
@@ -503,7 +530,6 @@ class Question_start_ci extends CI_Controller{
     public function terminate(){
         
         $data["template"] = "thank_youpage.php";
-        
         
         $this->load->view('base_html',$data);
     }

@@ -24,6 +24,11 @@ if ( ! function_exists('getfields_type')){
 
       
        
+	$selected_null = "";
+	
+	if($selected_value == "") $selected_null = "selected";
+	$html = '<option value="0" '.$selected_null.'>-- Select options --</option>';
+	
         
         foreach ($xx->result() as $row) {
             
